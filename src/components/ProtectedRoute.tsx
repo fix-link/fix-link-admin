@@ -17,6 +17,14 @@ const ProtectedRoute = ({ children, role }: Props) => {
     return <Navigate to="/login" replace />;
   }
 
+  if (user.isDeactivated) {
+    return <Navigate to="/deactivated" replace />;
+  }
+
+  if (user.mustChangePassword && window.location.pathname !== "/moderator/change-password") {
+    return <Navigate to="/moderator/change-password" replace />;
+  }
+
   if (user.role !== role) {
     const redirect = user.role === "admin" ? "/admin" : "/moderator";
     return <Navigate to={redirect} replace />;

@@ -15,6 +15,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (access: string, refresh: string, user: StaffUser) => void;
   logout: () => Promise<void>;
+  updateUser: (updates: Partial<StaffUser>) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -56,9 +57,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false);
   }, []);
 
+  const updateUser = useCallback((updates: Partial<StaffUser>) => {
+    setUser((prev) => {
+      if (!prev) return null;
+      const updated = { ...prev, ...updates };
+      localStorage.setItem("admin_user", JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated, isLoading, login, logout }}
+      value={{ user, isAuthenticated, isLoading, login, logout, updateUser }}
     >
       {children}
     </AuthContext.Provider>

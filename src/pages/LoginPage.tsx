@@ -18,7 +18,13 @@ const LoginPage = () => {
   if (isLoading) return <PageLoader fullScreen />;
 
   if (isAuthenticated && user) {
-    navigate(getStaffHomePath(user.role), { replace: true });
+    if (user.isDeactivated) {
+      navigate("/deactivated", { replace: true });
+    } else if (user.mustChangePassword) {
+      navigate("/moderator/change-password", { replace: true });
+    } else {
+      navigate(getStaffHomePath(user.role), { replace: true });
+    }
     return null;
   }
 
@@ -29,12 +35,53 @@ const LoginPage = () => {
     try {
       const res = await loginStaff(email, password);
       login(res.access, res.refresh, res.user);
-      navigate(getStaffHomePath(res.user.role));
+      if (res.user.isDeactivated) {
+        navigate("/deactivated");
+      } else if (res.user.mustChangePassword) {
+        navigate("/moderator/change-password");
+      } else {
+        navigate(getStaffHomePath(res.user.role));
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleBypassLogin = (role: "admin" | "moderator", mustChange?: boolean) => {
+    const mockUser = {
+      id: `mock-${role}-id`,
+      username: `mock_${role}`,
+      email: `${role}@mock-fixlink.com`,
+      role: role,
+      first_name: "Mock",
+      last_name: role.charAt(0).toUpperCase() + role.slice(1),
+      is_verified: true,
+      mustChangePassword: mustChange,
+    };
+    login(`mock_${role}_token`, `mock_${role}_refresh`, mockUser);
+    if (mustChange) {
+      navigate("/moderator/change-password");
+    } else {
+      navigate(getStaffHomePath(role));
+    }
+  };
+
+  const handleBypassDeactivated = () => {
+    const mockUser = {
+      id: "mock-banned-id",
+      username: "banned_user",
+      email: "banned@mock-fixlink.com",
+      role: "moderator",
+      first_name: "Banned",
+      last_name: "Moderator",
+      is_verified: false,
+      isDeactivated: true,
+      deactivationReason: "Deactivated due to multiple community reports (Threshold reached: 3 reports)."
+    };
+    login("mock_banned_token", "mock_banned_refresh", mockUser);
+    navigate("/deactivated");
   };
 
   return (
@@ -137,6 +184,42 @@ const LoginPage = () => {
               )}
             </button>
           </form>
+
+          <div className="mt-6 pt-6 border-t border-border-light/50 dark:border-border-dark/50 text-center">
+            <p className="text-[10px] font-black uppercase tracking-wider text-subtext-light dark:text-subtext-dark mb-3">
+              Development Bypass
+            </p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              <button
+                type="button"
+                onClick={() => handleBypassLogin("admin")}
+                className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-full text-[10px] font-black uppercase transition-colors"
+              >
+                Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => handleBypassLogin("moderator")}
+                className="px-3 py-1.5 bg-accent-purple/10 hover:bg-accent-purple/20 text-accent-purple rounded-full text-[10px] font-black uppercase transition-colors"
+              >
+                Moderator
+              </button>
+              <button
+                type="button"
+                onClick={() => handleBypassLogin("moderator", true)}
+                className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full text-[10px] font-black uppercase transition-colors"
+              >
+                Mod (Temp Pass)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleBypassDeactivated()}
+                className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full text-[10px] font-black uppercase transition-colors"
+              >
+                Deactivated
+              </button>
+            </div>
+          </div>
         </div>
 
         <p className="text-center text-[10px] font-bold text-subtext-light dark:text-subtext-dark mt-6 uppercase tracking-widest">

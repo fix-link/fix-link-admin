@@ -48,6 +48,10 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     if (error.response?.status === 401) {
+      const token = localStorage.getItem("admin_access_token");
+      if (token && token.startsWith("mock_")) {
+        return Promise.reject(error);
+      }
       localStorage.removeItem("admin_access_token");
       localStorage.removeItem("admin_refresh_token");
       localStorage.removeItem("admin_user");

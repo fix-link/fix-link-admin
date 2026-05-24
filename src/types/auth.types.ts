@@ -9,6 +9,9 @@ export interface StaffUser {
   role: StaffRole | string;
   is_verified?: boolean;
   created_at?: string;
+  mustChangePassword?: boolean;
+  isDeactivated?: boolean;
+  deactivationReason?: string;
 }
 
 export const isStaffRole = (role?: string): role is StaffRole =>

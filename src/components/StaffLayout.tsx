@@ -12,6 +12,10 @@ import {
   Sun,
   Menu,
   X,
+  CheckSquare,
+  BarChart2,
+  UserCog,
+  AlertOctagon,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
@@ -23,6 +27,7 @@ interface NavItem {
   label: string;
   icon: typeof LayoutDashboard;
   end?: boolean;
+  dividerBefore?: boolean;
 }
 
 const adminNav: NavItem[] = [
@@ -32,13 +37,18 @@ const adminNav: NavItem[] = [
   { to: "/admin/payments", label: "Payments", icon: CreditCard },
   { to: "/admin/reviews", label: "Reviews", icon: Star },
   { to: "/admin/notifications", label: "Notifications", icon: Bell },
+  { to: "/admin/moderators", label: "Moderators", icon: UserCog, dividerBefore: true },
+  { to: "/admin/moderator-activity", label: "Mod Activity", icon: CheckSquare },
+  { to: "/admin/user-ban", label: "Banned Users", icon: AlertOctagon },
+  { to: "/admin/reports", label: "Analytics", icon: BarChart2 },
 ];
 
 const moderatorNav: NavItem[] = [
   { to: "/moderator", label: "Overview", icon: LayoutDashboard, end: true },
-  { to: "/moderator/jobs", label: "Jobs queue", icon: Briefcase },
-  { to: "/moderator/reviews", label: "Reviews", icon: Star },
-  { to: "/moderator/reports", label: "Reports", icon: Shield },
+  { to: "/moderator/verifications", label: "Verifications", icon: CheckSquare },
+  { to: "/moderator/disputes", label: "Disputes", icon: AlertOctagon },
+  { to: "/moderator/jobs", label: "Jobs queue", icon: Briefcase, dividerBefore: true },
+  { to: "/moderator/reports", label: "My Reports", icon: BarChart2 },
 ];
 
 interface Props {
@@ -72,24 +82,28 @@ const StaffLayout = ({ role, title, subtitle }: Props) => {
           {role} portal
         </p>
       </div>
-      <nav className="flex-1 px-4 py-6 space-y-1">
+      <nav className="flex-1 px-4 py-6 space-y-0.5 overflow-y-auto">
         {nav.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end}
-            onClick={() => setMobileOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
-                isActive
-                  ? "bg-primary text-white shadow-lg shadow-primary/25"
-                  : "text-subtext-light dark:text-subtext-dark hover:bg-slate-100 dark:hover:bg-slate-800/80"
-              }`
-            }
-          >
-            <item.icon size={18} />
-            {item.label}
-          </NavLink>
+          <div key={item.to}>
+            {item.dividerBefore && (
+              <div className="h-px bg-border-light/60 dark:bg-border-dark/60 my-3 mx-2" />
+            )}
+            <NavLink
+              to={item.to}
+              end={item.end}
+              onClick={() => setMobileOpen(false)}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                  isActive
+                    ? "bg-primary text-white shadow-lg shadow-primary/25"
+                    : "text-subtext-light dark:text-subtext-dark hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-text-light dark:hover:text-text-dark"
+                }`
+              }
+            >
+              <item.icon size={18} />
+              {item.label}
+            </NavLink>
+          </div>
         ))}
       </nav>
       <div className="p-4 border-t border-border-light/50 dark:border-border-dark/50 space-y-2">
