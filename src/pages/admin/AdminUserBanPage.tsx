@@ -256,7 +256,7 @@ const AdminUserBanPage = () => {
               Deactivate User Account
             </h3>
             <p className="text-xs text-subtext-light dark:text-subtext-dark mb-6">
-              Suspending <span className="text-primary font-black">@{selectedUser.username}</span> will prevent them from accessing any client or staff interface on Fix-Link.
+              Suspending <span className="text-primary font-black">@{selectedUser.username}</span> will prevent them from accessing any client or staff interface on Fix Link.
             </p>
 
             {msg && (

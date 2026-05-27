@@ -137,7 +137,7 @@ const AdminUsersPage = () => {
 
       <div className="glass-panel p-6 rounded-3xl border border-white/40 shadow-xl">
         <h3 className="text-lg font-bold text-text-light dark:text-text-dark mb-4">
-          Fix-Link Users Catalog
+          Fix Link Users Catalog
         </h3>
         <DataTable
           rows={processedUsers}

@@ -79,7 +79,7 @@ const StaffLayout = ({ role, title, subtitle }: Props) => {
   const SidebarContent = () => (
     <>
       <div className="px-6 py-8 border-b border-border-light/50 dark:border-border-dark/50">
-        <h1 className="text-2xl font-display font-black text-gradient">Fix-Link</h1>
+        <h1 className="text-2xl font-display font-black text-gradient">Fix Link</h1>
         <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary mt-1">
           {role} portal
         </p>

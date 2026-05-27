@@ -12,7 +12,7 @@ export const loginStaff = async (email: string, password: string) => {
     const user = response.data.user as StaffUser;
     if (!isStaffRole(user.role)) {
       throw new Error(
-        "Access denied. This portal is for Fix-Link administrators and moderators only."
+        "Access denied. This portal is for Fix Link administrators and moderators only."
       );
     }
     return {

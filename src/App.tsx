@@ -66,7 +66,7 @@ function App() {
                   <StaffLayout
                     role="admin"
                     title="Admin dashboard"
-                    subtitle="Full platform control for Fix-Link"
+                    subtitle="Full platform control for Fix Link"
                   />
                 </ProtectedRoute>
               }

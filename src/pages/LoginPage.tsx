@@ -96,11 +96,8 @@ const LoginPage = () => {
 
       <div className="w-full max-w-md animate-fade-in-up">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center size-14 rounded-2xl bg-primary/10 text-primary mb-4">
-            <Shield size={28} strokeWidth={2.5} />
-          </div>
           <h1 className="text-4xl font-display font-extrabold text-gradient mb-2 tracking-tight">
-            Fix-Link
+            Fix Link
           </h1>
           <p className="text-subtext-light dark:text-subtext-dark font-medium">
             Staff portal — administrators & moderators
