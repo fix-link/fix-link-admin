@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { Shield, MessageSquare, User, Briefcase, DollarSign, Award, CheckCircle } from "lucide-react";
-import { listDisputes, claimDispute, resolveDispute, getChatMessages } from "../../api/admin.api";
+import { Shield, MessageSquare, User, DollarSign, Award, CheckCircle, Phone, AlertTriangle } from "lucide-react";
+import { listDisputes, claimDispute, resolveDispute, getChatMessages, submitBanRequest, MOCK_USER_PROFILES } from "../../api/admin.api";
 import { useAuth } from "../../context/AuthContext";
 import PageLoader from "../../components/PageLoader";
+
+const BAN_THRESHOLD = 3; // report count at which moderator can request a ban
 
 interface Dispute {
   id: string;
@@ -16,11 +18,13 @@ interface Dispute {
     username: string;
     role: string;
     email: string;
+    phone?: string;
   };
   against_detail?: {
     username: string;
     role: string;
     email: string;
+    phone?: string;
   };
   payment_detail?: {
     id: string;
@@ -48,11 +52,29 @@ const ModeratorDisputesPage = () => {
   const [chatLoading, setChatLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [banRequested, setBanRequested] = useState<Record<string, boolean>>({});
+  const [banSubmitting, setBanSubmitting] = useState<string | null>(null);
 
   // Resolution inputs
   const [refundCustomer, setRefundCustomer] = useState<number>(0);
   const [payoutProfessional, setPayoutProfessional] = useState<number>(0);
   const [notes, setNotes] = useState("");
+
+  const getReportCount = (username?: string) =>
+    username ? (MOCK_USER_PROFILES[username]?.report_count ?? 0) : 0;
+
+  const handleBanRequest = async (username: string, email: string, phone: string, role: string) => {
+    const count = getReportCount(username);
+    setBanSubmitting(username);
+    try {
+      await submitBanRequest({ username, email, phone, role, report_count: count, reason: `User @${username} has been reported ${count} times. Moderator flagged for admin review.` });
+      setBanRequested((prev) => ({ ...prev, [username]: true }));
+    } catch {
+      alert("Failed to submit ban request. Please try again.");
+    } finally {
+      setBanSubmitting(null);
+    }
+  };
 
   const loadDisputes = (selectId?: string) => {
     listDisputes()
@@ -245,28 +267,79 @@ const ModeratorDisputesPage = () => {
               {/* Audit Details & Chat logs */}
               <div className="flex-1 p-6 overflow-y-auto space-y-6 border-r border-border-light dark:border-border-dark">
                 {/* Contract overview card */}
-                <div className="grid grid-cols-3 gap-4 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-border-light dark:border-border-dark">
-                  <div className="space-y-1">
-                    <span className="text-[8px] font-black uppercase tracking-widest text-subtext-light dark:text-subtext-dark flex items-center gap-1">
-                      <User size={10} /> Raised By
-                    </span>
-                    <p className="text-xs font-bold text-text-light dark:text-text-dark truncate">
-                      @{selectedDispute.raised_by_detail?.username} ({selectedDispute.raised_by_detail?.role})
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-[8px] font-black uppercase tracking-widest text-subtext-light dark:text-subtext-dark flex items-center gap-1">
-                      <User size={10} /> Disputed Party
-                    </span>
-                    <p className="text-xs font-bold text-text-light dark:text-text-dark truncate">
-                      @{selectedDispute.against_detail?.username} ({selectedDispute.against_detail?.role})
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-[8px] font-black uppercase tracking-widest text-subtext-light dark:text-subtext-dark flex items-center gap-1">
+                <div className="space-y-3">
+                  {/* Raised By */}
+                  {(() => {
+                    const u = selectedDispute.raised_by_detail;
+                    const count = getReportCount(u?.username);
+                    return (
+                      <div className="flex items-start justify-between bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-border-light dark:border-border-dark gap-3">
+                        <div className="space-y-1 min-w-0">
+                          <span className="text-[8px] font-black uppercase tracking-widest text-subtext-light dark:text-subtext-dark flex items-center gap-1">
+                            <User size={10} /> Reporter
+                          </span>
+                          <p className="text-xs font-bold text-text-light dark:text-text-dark">@{u?.username} <span className="text-subtext-light font-medium">({u?.role})</span></p>
+                          <p className="text-[10px] text-subtext-light dark:text-subtext-dark">{u?.email}</p>
+                          <p className="text-[10px] font-bold text-primary flex items-center gap-1"><Phone size={9} />{u?.phone || "—"}</p>
+                        </div>
+                        <div className="flex flex-col items-end gap-2 shrink-0">
+                          <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${
+                            count >= BAN_THRESHOLD ? "bg-red-50 text-red-600 border-red-200 dark:bg-red-500/10 dark:text-red-400" : "bg-slate-100 text-subtext-light border-border-light dark:bg-slate-800"
+                          }`}>{count} report{count !== 1 ? "s" : ""}</span>
+                          {count >= BAN_THRESHOLD && (
+                            <button
+                              onClick={() => handleBanRequest(u?.username!, u?.email!, u?.phone || "", u?.role!)}
+                              disabled={!!banRequested[u?.username!] || banSubmitting === u?.username}
+                              className="text-[9px] font-black px-2 py-1 rounded-lg bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white flex items-center gap-1 transition-colors"
+                            >
+                              <AlertTriangle size={9} />
+                              {banRequested[u?.username!] ? "Requested" : "Request Ban"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Against */}
+                  {(() => {
+                    const u = selectedDispute.against_detail;
+                    const count = getReportCount(u?.username);
+                    return (
+                      <div className="flex items-start justify-between bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-border-light dark:border-border-dark gap-3">
+                        <div className="space-y-1 min-w-0">
+                          <span className="text-[8px] font-black uppercase tracking-widest text-subtext-light dark:text-subtext-dark flex items-center gap-1">
+                            <User size={10} /> Disputed Party
+                          </span>
+                          <p className="text-xs font-bold text-text-light dark:text-text-dark">@{u?.username} <span className="text-subtext-light font-medium">({u?.role})</span></p>
+                          <p className="text-[10px] text-subtext-light dark:text-subtext-dark">{u?.email}</p>
+                          <p className="text-[10px] font-bold text-primary flex items-center gap-1"><Phone size={9} />{u?.phone || "—"}</p>
+                        </div>
+                        <div className="flex flex-col items-end gap-2 shrink-0">
+                          <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${
+                            count >= BAN_THRESHOLD ? "bg-red-50 text-red-600 border-red-200 dark:bg-red-500/10 dark:text-red-400" : "bg-slate-100 text-subtext-light border-border-light dark:bg-slate-800"
+                          }`}>{count} report{count !== 1 ? "s" : ""}</span>
+                          {count >= BAN_THRESHOLD && (
+                            <button
+                              onClick={() => handleBanRequest(u?.username!, u?.email!, u?.phone || "", u?.role!)}
+                              disabled={!!banRequested[u?.username!] || banSubmitting === u?.username}
+                              className="text-[9px] font-black px-2 py-1 rounded-lg bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white flex items-center gap-1 transition-colors"
+                            >
+                              <AlertTriangle size={9} />
+                              {banRequested[u?.username!] ? "Requested" : "Request Ban"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Escrow */}
+                  <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-border-light dark:border-border-dark">
+                    <span className="text-[8px] font-black uppercase tracking-widest text-subtext-light dark:text-subtext-dark flex items-center gap-1 mb-1">
                       <DollarSign size={10} /> Total Escrow
                     </span>
-                    <p className="text-xs font-black text-gradient">
+                    <p className="text-sm font-black text-gradient">
                       ${selectedDispute.payment_detail?.amount} {selectedDispute.payment_detail?.currency}
                     </p>
                   </div>

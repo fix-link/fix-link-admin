@@ -16,6 +16,7 @@ import {
   BarChart2,
   UserCog,
   AlertOctagon,
+  Flag,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
@@ -40,6 +41,7 @@ const adminNav: NavItem[] = [
   { to: "/admin/moderators", label: "Moderators", icon: UserCog, dividerBefore: true },
   { to: "/admin/moderator-activity", label: "Mod Activity", icon: CheckSquare },
   { to: "/admin/user-ban", label: "Banned Users", icon: AlertOctagon },
+  { to: "/admin/ban-requests", label: "Ban Requests", icon: Flag },
   { to: "/admin/reports", label: "Analytics", icon: BarChart2 },
 ];
 
@@ -100,7 +102,7 @@ const StaffLayout = ({ role, title, subtitle }: Props) => {
                 }`
               }
             >
-              <item.icon size={18} />
+              <item.icon size={18} className="shrink-0" />
               {item.label}
             </NavLink>
           </div>
@@ -112,7 +114,7 @@ const StaffLayout = ({ role, title, subtitle }: Props) => {
           onClick={toggleTheme}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-subtext-light dark:text-subtext-dark hover:bg-slate-100 dark:hover:bg-slate-800/80"
         >
-          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          {theme === "dark" ? <Sun size={18} className="shrink-0" /> : <Moon size={18} className="shrink-0" />}
           {theme === "dark" ? "Light mode" : "Dark mode"}
         </button>
         <button
@@ -120,7 +122,7 @@ const StaffLayout = ({ role, title, subtitle }: Props) => {
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
         >
-          <LogOut size={18} />
+          <LogOut size={18} className="shrink-0" />
           Sign out
         </button>
       </div>

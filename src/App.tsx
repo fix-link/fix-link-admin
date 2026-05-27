@@ -20,6 +20,7 @@ const AdminReportsPage = lazy(() => import("./pages/admin/AdminReportsPage"));
 const AdminModeratorActivityPage = lazy(() => import("./pages/admin/AdminModeratorActivityPage"));
 const AdminModeratorDetailPage = lazy(() => import("./pages/admin/AdminModeratorDetailPage"));
 const AdminUserBanPage = lazy(() => import("./pages/admin/AdminUserBanPage"));
+const AdminBanRequestsPage = lazy(() => import("./pages/admin/AdminBanRequestsPage"));
 
 // ── Moderator Pages ───────────────────────────────────────────────────
 const ModeratorDashboard = lazy(() => import("./pages/moderator/ModeratorDashboard"));
@@ -80,6 +81,7 @@ function App() {
               <Route path="moderator-activity" element={<Lazy><AdminModeratorActivityPage /></Lazy>} />
               <Route path="moderator-detail/:id" element={<Lazy><AdminModeratorDetailPage /></Lazy>} />
               <Route path="user-ban" element={<Lazy><AdminUserBanPage /></Lazy>} />
+              <Route path="ban-requests" element={<Lazy><AdminBanRequestsPage /></Lazy>} />
               <Route path="reports" element={<Lazy><AdminReportsPage /></Lazy>} />
             </Route>
 

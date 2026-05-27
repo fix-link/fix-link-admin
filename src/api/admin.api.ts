@@ -78,12 +78,22 @@ const MOCK_VERIFICATION_REQUESTS = [
   }
 ];
 
+// Extended user profiles with phone numbers and report counts
+export const MOCK_USER_PROFILES: Record<string, { phone: string; report_count: number }> = {
+  "mary_doe":      { phone: "+1 (206) 555-0182", report_count: 1 },
+  "plumber_pro":   { phone: "+1 (425) 555-0234", report_count: 2 },
+  "john_customer": { phone: "+1 (206) 555-0317", report_count: 4 },
+  "electric_spark":{ phone: "+1 (253) 555-0491", report_count: 5 },
+  "sarah_mod":     { phone: "+1 (206) 555-0102", report_count: 0 },
+  "painter_pro":   { phone: "+1 (425) 555-0378", report_count: 0 },
+};
+
 const MOCK_DISPUTES = [
   {
     id: "d-1",
     job_detail: { id: "j-5", title: "Unclog Main Sewer Line", address: "202 Birch Way, Kirkland", description: "The professional started but left mid-way because he said he didn't have the right machine. The drain is still clogged." },
-    raised_by_detail: { username: "mary_doe", role: "customer", email: "mary@example.com" },
-    against_detail: { username: "plumber_pro", role: "professional", email: "contact@proplumbing.com" },
+    raised_by_detail: { username: "mary_doe", role: "customer", email: "mary@example.com", phone: "+1 (206) 555-0182" },
+    against_detail: { username: "plumber_pro", role: "professional", email: "contact@proplumbing.com", phone: "+1 (425) 555-0234" },
     payment_detail: { id: "pay-5", amount: "600.00", currency: "USD" },
     reason: "Incomplete Work",
     description: "Mary Doe claims John Plumber left the house with a half-unclogged pipe and charged full. John claims the pipe had root damage requiring heavy machinery which was not part of the bid.",
@@ -94,14 +104,34 @@ const MOCK_DISPUTES = [
   {
     id: "d-2",
     job_detail: { id: "j-1", title: "Leaky Faucet in Kitchen", address: "123 Maple St, Seattle", description: "Fix the kitchen sink faucet leaks." },
-    raised_by_detail: { username: "plumber_pro", role: "professional", email: "contact@proplumbing.com" },
-    against_detail: { username: "john_customer", role: "customer", email: "john@gmail.com" },
+    raised_by_detail: { username: "plumber_pro", role: "professional", email: "contact@proplumbing.com", phone: "+1 (425) 555-0234" },
+    against_detail: { username: "john_customer", role: "customer", email: "john@gmail.com", phone: "+1 (206) 555-0317" },
     payment_detail: { id: "pay-1", amount: "150.00", currency: "USD" },
     reason: "Refusal of Release",
     description: "The professional says the job is fully done, but the customer is refusing to confirm completion and release the escrow because of a small scratch on the sink basin.",
     status: "in_review",
     claimed_by_name: "sarah_mod",
     created_at: "2026-05-24T01:30:00Z"
+  }
+];
+
+// Ban requests submitted by moderators, pending admin action
+export const MOCK_BAN_REQUESTS: {
+  id: string; username: string; email: string; phone: string; role: string;
+  report_count: number; reason: string; submitted_by: string;
+  submitted_at: string; status: "pending" | "approved" | "rejected";
+}[] = [
+  {
+    id: "br-1", username: "john_customer", email: "john@gmail.com", phone: "+1 (206) 555-0317",
+    role: "customer", report_count: 4,
+    reason: "User has been reported 4 times for abusive language towards professionals. Repeated violations after warnings.",
+    submitted_by: "sarah_mod", submitted_at: "2026-05-24T09:00:00Z", status: "pending"
+  },
+  {
+    id: "br-2", username: "electric_spark", email: "spark@electro.com", phone: "+1 (253) 555-0491",
+    role: "professional", report_count: 5,
+    reason: "Professional has 5 reports for fraud — misrepresenting qualifications and abandoning jobs after partial payment.",
+    submitted_by: "john_mod", submitted_at: "2026-05-23T14:30:00Z", status: "pending"
   }
 ];
 
@@ -432,4 +462,70 @@ export const banUser = async (userId: string, reason?: string): Promise<void> =>
     return new Promise((resolve) => setTimeout(resolve, 300));
   }
   await api.post(`/admin/users/${userId}/ban/`, { reason });
+};
+
+// --- Ban Requests (Moderator submits → Admin approves) ---
+
+export const fetchUserReportCount = async (username: string): Promise<number> => {
+  if (isMock()) {
+    return MOCK_USER_PROFILES[username]?.report_count ?? 0;
+  }
+  const res = await api.get(`/admin/users/report-count/`, { params: { username } });
+  return res.data?.report_count ?? 0;
+};
+
+export const submitBanRequest = async (payload: {
+  username: string;
+  email: string;
+  phone: string;
+  role: string;
+  report_count: number;
+  reason: string;
+}): Promise<void> => {
+  if (isMock()) {
+    const existing = MOCK_BAN_REQUESTS.find((r) => r.username === payload.username && r.status === "pending");
+    if (!existing) {
+      MOCK_BAN_REQUESTS.push({
+        id: `br-${Date.now()}`,
+        ...payload,
+        submitted_by: "moderator",
+        submitted_at: new Date().toISOString(),
+        status: "pending",
+      });
+    }
+    return new Promise((resolve) => setTimeout(resolve, 300));
+  }
+  await api.post("/moderator/ban-requests/", payload);
+};
+
+export const fetchBanRequests = async (): Promise<typeof MOCK_BAN_REQUESTS> => {
+  if (isMock()) return [...MOCK_BAN_REQUESTS];
+  const res = await api.get("/admin/ban-requests/");
+  return Array.isArray(res.data) ? res.data : res.data?.results ?? [];
+};
+
+export const approveBanRequest = async (id: string, reason?: string): Promise<void> => {
+  if (isMock()) {
+    const req = MOCK_BAN_REQUESTS.find((r) => r.id === id);
+    if (req) {
+      req.status = "approved";
+      // Also mark user banned in the report counts list
+      const user = MOCK_USER_REPORT_COUNTS.find((u) => u.username === req.username);
+      if (user) {
+        user.status = "banned";
+        user.reason = reason || req.reason;
+      }
+    }
+    return new Promise((resolve) => setTimeout(resolve, 300));
+  }
+  await api.post(`/admin/ban-requests/${id}/approve/`, { reason });
+};
+
+export const rejectBanRequest = async (id: string, notes?: string): Promise<void> => {
+  if (isMock()) {
+    const req = MOCK_BAN_REQUESTS.find((r) => r.id === id);
+    if (req) req.status = "rejected";
+    return new Promise((resolve) => setTimeout(resolve, 300));
+  }
+  await api.post(`/admin/ban-requests/${id}/reject/`, { notes });
 };
