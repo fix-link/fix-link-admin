@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import {
-  listJobs,
+  fetchReportsSummary,
   listNotifications,
-  listPayments,
   listReviews,
-  listUsers,
 } from "../api/admin.api";
 
 export interface DashboardStats {
@@ -42,37 +40,38 @@ export const useDashboardStats = () => {
       setLoading(true);
       setError(null);
       try {
-        const [users, jobs, payments, reviews, notifications] = await Promise.all([
-          listUsers(),
-          listJobs(),
-          listPayments(),
+        const [summary, reviews, notifications] = await Promise.all([
+          fetchReportsSummary(),
           listReviews(),
           listNotifications(),
         ]);
 
         if (cancelled) return;
 
-        const professionals = users.filter(
-          (u: { role?: string }) => u.role === "professional"
-        ).length;
-        const customers = users.filter(
-          (u: { role?: string }) => u.role === "customer"
-        ).length;
-        const activeStatuses = ["pending", "accepted", "booked", "in_progress"];
-        const activeJobs = jobs.filter((j: { status?: string }) =>
-          activeStatuses.includes(j.status || "")
-        ).length;
-        const disputedPayments = payments.filter(
-          (p: { status?: string }) => p.status === "disputed"
-        ).length;
+        const userTotals = summary.user_totals;
+        const jobTotals = summary.job_totals;
+        const paymentTotals = summary.payment_totals;
+
+        const users = Object.values(userTotals).reduce((a, b) => a + b, 0);
+        const professionals = userTotals["professional"] ?? 0;
+        const customers = userTotals["customer"] ?? 0;
+
+        const jobs = Object.values(jobTotals).reduce((a, b) => a + b, 0);
+        const activeJobs =
+          (jobTotals["pending"] ?? 0) +
+          (jobTotals["booked"] ?? 0) +
+          (jobTotals["in_progress"] ?? 0);
+
+        const payments = Object.values(paymentTotals).reduce((a, b) => a + b, 0);
+        const disputedPayments = paymentTotals["disputed"] ?? 0;
 
         setStats({
-          users: users.length,
+          users,
           professionals,
           customers,
-          jobs: jobs.length,
+          jobs,
           activeJobs,
-          payments: payments.length,
+          payments,
           reviews: reviews.length,
           notifications: notifications.length,
           disputedPayments,

@@ -30,15 +30,15 @@ const AdminPaymentsPage = () => {
     const existing = fees.find((f) => f.id === paymentId);
     if (existing) return existing;
 
-    // Dynamically estimate platform fee (10%) for payments that aren't mapped in mock
+    // Estimate platform fee (10%) for payments without explicit fee mapping
     const p = rows.find((r) => r.id === paymentId);
     if (p) {
       const amt = parseFloat(String(p.amount));
       const platformFee = (amt * 0.1).toFixed(2);
       return {
         id: paymentId,
-        customer_name: "John Customer (Mock)",
-        professional_name: "Sarah Spark (Mock)",
+        customer_name: "Customer",
+        professional_name: "Professional",
         fee_amount: platformFee,
         job_title: "General Maintenance & Repairs",
         date: new Date().toISOString()
