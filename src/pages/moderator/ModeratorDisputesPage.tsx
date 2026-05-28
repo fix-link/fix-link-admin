@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Shield, MessageSquare, User, DollarSign, Award, CheckCircle, Phone, AlertTriangle } from "lucide-react";
-import { listDisputes, claimDispute, resolveDispute, getChatMessages, submitBanRequest, MOCK_USER_PROFILES } from "../../api/admin.api";
+import { listDisputes, claimDispute, resolveDispute, getChatMessages, submitBanRequest, fetchUserReportCount } from "../../api/admin.api";
 import { useAuth } from "../../context/AuthContext";
 import PageLoader from "../../components/PageLoader";
 
@@ -54,6 +54,7 @@ const ModeratorDisputesPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [banRequested, setBanRequested] = useState<Record<string, boolean>>({});
   const [banSubmitting, setBanSubmitting] = useState<string | null>(null);
+  const [reportCounts, setReportCounts] = useState<Record<string, number>>({});
 
   // Resolution inputs
   const [refundCustomer, setRefundCustomer] = useState<number>(0);
@@ -61,7 +62,19 @@ const ModeratorDisputesPage = () => {
   const [notes, setNotes] = useState("");
 
   const getReportCount = (username?: string) =>
-    username ? (MOCK_USER_PROFILES[username]?.report_count ?? 0) : 0;
+    username ? (reportCounts[username] ?? 0) : 0;
+
+  const loadReportCounts = async (dispute: typeof selectedDispute) => {
+    if (!dispute) return;
+    const usernames = [
+      dispute.raised_by_detail?.username,
+      dispute.against_detail?.username,
+    ].filter(Boolean) as string[];
+    const entries = await Promise.all(
+      usernames.map(async (u) => [u, await fetchUserReportCount(u)] as [string, number])
+    );
+    setReportCounts((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+  };
 
   const handleBanRequest = async (username: string, email: string, phone: string, role: string) => {
     const count = getReportCount(username);
@@ -104,6 +117,8 @@ const ModeratorDisputesPage = () => {
         .then((messages) => setChatMessages(messages as ChatMessage[]))
         .catch(() => setChatMessages([]))
         .finally(() => setChatLoading(false));
+
+      loadReportCounts(selectedDispute);
 
       const amt = parseFloat(selectedDispute.payment_detail?.amount || "0");
       setRefundCustomer(amt / 2);

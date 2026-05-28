@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Shield } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { loginStaff } from "../api/auth.api";
 import { useAuth } from "../context/AuthContext";
 import { getStaffHomePath } from "../types/auth.types";
@@ -49,41 +49,6 @@ const LoginPage = () => {
     }
   };
 
-  const handleBypassLogin = (role: "admin" | "moderator", mustChange?: boolean) => {
-    const mockUser = {
-      id: `mock-${role}-id`,
-      username: `mock_${role}`,
-      email: `${role}@mock-fixlink.com`,
-      role: role,
-      first_name: "Mock",
-      last_name: role.charAt(0).toUpperCase() + role.slice(1),
-      is_verified: true,
-      mustChangePassword: mustChange,
-    };
-    login(`mock_${role}_token`, `mock_${role}_refresh`, mockUser);
-    if (mustChange) {
-      navigate("/moderator/change-password");
-    } else {
-      navigate(getStaffHomePath(role));
-    }
-  };
-
-  const handleBypassDeactivated = () => {
-    const mockUser = {
-      id: "mock-banned-id",
-      username: "banned_user",
-      email: "banned@mock-fixlink.com",
-      role: "moderator",
-      first_name: "Banned",
-      last_name: "Moderator",
-      is_verified: false,
-      isDeactivated: true,
-      deactivationReason: "Deactivated due to multiple community reports (Threshold reached: 3 reports)."
-    };
-    login("mock_banned_token", "mock_banned_refresh", mockUser);
-    navigate("/deactivated");
-  };
-
   return (
     <div className="relative min-h-screen flex items-center justify-center p-6 bg-background-light dark:bg-background-dark overflow-hidden font-sans">
       <div className="absolute top-0 left-0 w-full h-full -z-10">
@@ -100,7 +65,7 @@ const LoginPage = () => {
             Fix Link
           </h1>
           <p className="text-subtext-light dark:text-subtext-dark font-medium">
-            Staff portal — administrators & moderators
+            Staff portal — administrators &amp; moderators
           </p>
         </div>
 
@@ -124,10 +89,7 @@ const LoginPage = () => {
                 Email
               </label>
               <div className="relative">
-                <Mail
-                  size={18}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-subtext-light"
-                />
+                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-subtext-light" />
                 <input
                   type="email"
                   required
@@ -144,10 +106,7 @@ const LoginPage = () => {
                 Password
               </label>
               <div className="relative">
-                <Lock
-                  size={18}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-subtext-light"
-                />
+                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-subtext-light" />
                 <input
                   type={showPassword ? "text" : "password"}
                   required
@@ -181,46 +140,10 @@ const LoginPage = () => {
               )}
             </button>
           </form>
-
-          <div className="mt-6 pt-6 border-t border-border-light/50 dark:border-border-dark/50 text-center">
-            <p className="text-[10px] font-black uppercase tracking-wider text-subtext-light dark:text-subtext-dark mb-3">
-              Development Bypass
-            </p>
-            <div className="flex flex-wrap gap-2 justify-center">
-              <button
-                type="button"
-                onClick={() => handleBypassLogin("admin")}
-                className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-full text-[10px] font-black uppercase transition-colors"
-              >
-                Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => handleBypassLogin("moderator")}
-                className="px-3 py-1.5 bg-accent-purple/10 hover:bg-accent-purple/20 text-accent-purple rounded-full text-[10px] font-black uppercase transition-colors"
-              >
-                Moderator
-              </button>
-              <button
-                type="button"
-                onClick={() => handleBypassLogin("moderator", true)}
-                className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full text-[10px] font-black uppercase transition-colors"
-              >
-                Mod (Temp Pass)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleBypassDeactivated()}
-                className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full text-[10px] font-black uppercase transition-colors"
-              >
-                Deactivated
-              </button>
-            </div>
-          </div>
         </div>
 
         <p className="text-center text-[10px] font-bold text-subtext-light dark:text-subtext-dark mt-6 uppercase tracking-widest">
-          Separate from customer & professional app
+          Separate from customer &amp; professional app
         </p>
       </div>
     </div>

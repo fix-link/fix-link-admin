@@ -50,7 +50,7 @@ const AdminUsersPage = () => {
     }
   };
 
-  // Perform client-side filtering and sorting on the fetched mock/real users
+  // Perform client-side filtering and sorting on the fetched users
   const getProcessedUsers = () => {
     let result = [...users];
 

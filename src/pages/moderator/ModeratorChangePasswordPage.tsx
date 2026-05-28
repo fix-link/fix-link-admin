@@ -31,13 +31,7 @@ const ModeratorChangePasswordPage = () => {
 
     setLoading(true);
     try {
-      // If it's mock login, bypass actual HTTP call
-      const isMock = localStorage.getItem("admin_access_token")?.startsWith("mock_");
-      if (isMock) {
-        await new Promise((resolve) => setTimeout(resolve, 800));
-      } else {
-        await api.post("/users/change-temp-password/", { password });
-      }
+      await api.post("/users/change-temp-password/", { password });
 
       setSuccess(true);
       updateUser({ mustChangePassword: false });
